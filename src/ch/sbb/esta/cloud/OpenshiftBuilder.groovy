@@ -1,3 +1,8 @@
+#!/usr/bin/groovy
+package ch.sbb.esta.cloud;
+
+import java.util.Map;
+
 // some helper methods for deploying to openshift
 
 def buildDockerImageSelfRunningJar(Map params) {
