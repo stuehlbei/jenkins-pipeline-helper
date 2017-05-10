@@ -108,9 +108,9 @@ static Object mapLookup(Map map, String key, Object defaultValue){
     return map.containsKey(key) ? map.get(key): defaultValue
 }
 
-class DummyPom {
-    public String groupId, artifactId, version
-}
+//class DummyPom {
+//    public String groupId, artifactId, version
+//}
 
 // some demos
 
