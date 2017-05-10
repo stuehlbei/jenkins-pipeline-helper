@@ -53,7 +53,7 @@ def call(Map params) {
         pom = readMavenPom file: 'pom.xml'
     } else {
         println "param map:" + params + "\n"
-        pom = new DummyPom(groupId: "<groupId>",
+        pom = new DummyPom2(groupId: "<groupId>",
                 artifactId: "<artifactId>",
                 version: "<version>"
         )
@@ -101,7 +101,7 @@ static Object mapLookup(Map map, String key, Object defaultValue){
     return map.containsKey(key) ? map.get(key): defaultValue
 }
 
-class DummyPom {
+class DummyPom2 {
     public String groupId, artifactId, version
 }
 
