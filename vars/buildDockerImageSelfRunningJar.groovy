@@ -19,7 +19,7 @@ import java.util.Map
  *
  *
  * Beispiel-Aufruf:
- *     buildDockerImageSelfRunningJar(targetOsProject:"d", port:"2222", dryRun:true, pomArtifactId:"bla")</code>
+ *     buildDockerImageSelfRunningJar(targetOsProject:"d", port:"2222", dryRun:true, pomArtifactId:"bla")
  */
 def call(Map params) {
 
