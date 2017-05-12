@@ -28,26 +28,25 @@ import java.util.Map
  * Beispiel-Aufruf:
  *     buildDockerImageSelfRunningJar(targetOsProject:"d", port:"2222", dryRun:true, pomArtifactId:"bla")</code>
  */
-// ALL_PARAMETERS = ['targetOsProject','pomGroupId', 'pomArtifactId', 'pomVersion', 'ocApp', 'ocAppVersion', 'port', 'tag', 'dryRun', 'cluster']
 def buildDockerImageSelfRunningJar(Map params) {
 
     error = ''
 
     REQUIRED_PARAMS = ['targetOsProject']
-    
-    REQUIRED_PARAMS.each({ it ->
-        if (!params.containsKey(it)) {
-            error += 'missing required param: ' + it + "\n"
+
+    for (String param: REQUIRED_PARAMS) {
+        if (!params.containsKey(param)) {
+            error += 'missing required param: ' + param + "\n"
         }
-    })
+    }
 
     Set ALL_PARAMETERS = ['targetOsProject','pomGroupId', 'pomArtifactId', 'pomVersion', 'ocApp', 'ocAppVersion', 'port', 'tag', 'dryRun', 'cluster']
 
-    params.keySet().each({ it ->
-       if (!ALL_PARAMETERS.contains(it)) {
-           error += 'unknown param: ' + it + "\n"
-       }
-    })
+    for (Object key : params.keySet()){
+        if (!ALL_PARAMETERS.contains(key)) {
+            error += 'unknown param: ' + key + "\n"
+        }
+    }
 
     if (!error.equals("")) {
         println("\nERROR:"+error+"\n")
