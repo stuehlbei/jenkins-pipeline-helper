@@ -17,6 +17,12 @@ import java.util.Map
  *
  *    dryRun                  - Erlaubt es, zu schauen was für Defaults übernommen werden/ zum testen (Default: false)
  *
+ *    cluster                 - Auf welchem OSE Cluster soll der Build laufen? (aws, vias, awsdev)  (Default: vias)
+ *
+ *    newRelicKey             - Optinalen Newrelic Key  (Default: nicht gesetzt)
+ *                               nicht gesetzt:  kein New Relic Agent ist im Container
+ *                               ""           :  ein New Relic Agent ist im Container (aber noch nicht aktiv)
+ *                               einString    :  den zu setzenden New Relic Key im Container
  *
  * Beispiel-Aufruf:
  *     buildDockerImageSelfRunningJar(targetOsProject:"d", port:"2222", dryRun:true, pomArtifactId:"bla")
@@ -27,23 +33,18 @@ def call(Map params) {
 
     REQUIRED_PARAMS = ['targetOsProject']
 
-    for (String param: REQUIRED_PARAMS) {
+    for (String param : REQUIRED_PARAMS) {
         if (!params.containsKey(param)) {
             error += 'missing required param: ' + param + "\n"
         }
     }
 
-    Set ALL_PARAMETERS = ['targetOsProject','pomGroupId', 'pomArtifactId', 'pomVersion', 'ocApp', 'ocAppVersion', 'port', 'tag', 'dryRun', 'cluster']
+    Set ALL_PARAMETERS = ['targetOsProject', 'pomGroupId', 'pomArtifactId', 'pomVersion', 'ocApp', 'ocAppVersion', 'port', 'tag', 'dryRun', 'cluster', 'newRelicKey']
 
-    for (Object key : params.keySet()){
+    for (Object key : params.keySet()) {
         if (!ALL_PARAMETERS.contains(key)) {
             error += 'unknown param: ' + key + "\n"
         }
-    }
-
-    if (!error.equals("")) {
-        println("\nERROR:" + error + "\n")
-        return
     }
 
     boolean dryRun = mapLookup(params, "dryRun", false)
@@ -70,6 +71,16 @@ def call(Map params) {
     def port = mapLookup(params, "port", "8080")
     def tag = mapLookup(params, "tag", pomVersion)
 
+    def cluster = mapLookup(params, "cluster", "vias")
+    def newRelicKey = params.containsKey("newRelicKey") ? params.get("newRelicKey") : null
+
+
+    Set CLUSTER_VALUES = ['vias', 'aws', 'awsdev']
+    if (!CLUSTER_VALUES.contains(cluster)) {
+        error += 'unknown value for cluster: ' + cluster + " (allowed: " + CLUSTER_VALUES + ")\n"
+    }
+
+
     println "pomGroupId: " + pomGroupId
     println "pomArtifactId:" + pomArtifactId
     println "pomVersion:" + pomVersion
@@ -78,27 +89,51 @@ def call(Map params) {
     println "ocAppVersion:" + ocAppVersion
     println "port:" + port
     println "tag:" + tag
+    println "cluster:" + cluster
+    println "newRelicKey:" + newRelicKey
+
+    if (!error.equals("")) {
+        println("\nERROR:" + error + "\n")
+        return
+    }
 
     if (!dryRun) {
-        callJenkinsBuildProject(pomGroupId, pomArtifactId, pomVersion, targetProject, ocApp, ocAppVersion, port, tag)
+        if (newRelicKey == null) {
+            callJenkinsBuildProject(pomGroupId, pomArtifactId, pomVersion, targetProject, ocApp, ocAppVersion, port, tag, cluster)
+        } else {
+            callJenkinsBuildProjectNewRelic(pomGroupId, pomArtifactId, pomVersion, targetProject, ocApp, ocAppVersion, port, tag, cluster, newRelicKey)
+        }
     }
 }
 
 
-private void callJenkinsBuildProject(pomGroupId, pomArtifactId, pomVersion, targetProject, ocApp, ocAppVersion, port, tag) {
-    build job: 'kd.cloud.openshift.build.springboot.vias', parameters: [[$class: 'StringParameterValue', name: 'POM_GROUP_ID', value: "$pomGroupId"],
-                                                                        [$class: 'StringParameterValue', name: 'POM_ARTIFACT_ID', value: "$pomArtifactId"],
-                                                                        [$class: 'StringParameterValue', name: 'POM_VERSION', value: "$pomVersion"],
-                                                                        [$class: 'StringParameterValue', name: 'OC_PROJECT', value: "$targetProject"],
-                                                                        [$class: 'StringParameterValue', name: 'OC_APP', value: "$ocApp"],
-                                                                        [$class: 'StringParameterValue', name: 'OC_APP_VERSION', value: "$ocAppVersion"],
-                                                                        [$class: 'StringParameterValue', name: 'APPLICATION_PORT', value: "$port"],
-                                                                        [$class: 'StringParameterValue', name: 'TAG', value: "$tag"]
+private void callJenkinsBuildProject(pomGroupId, pomArtifactId, pomVersion, targetProject, ocApp, ocAppVersion, port, tag, cluster) {
+    build job: "kd.cloud.openshift.build.springboot.$cluster", parameters: [[$class: 'StringParameterValue', name: 'POM_GROUP_ID', value: "$pomGroupId"],
+                                                                            [$class: 'StringParameterValue', name: 'POM_ARTIFACT_ID', value: "$pomArtifactId"],
+                                                                            [$class: 'StringParameterValue', name: 'POM_VERSION', value: "$pomVersion"],
+                                                                            [$class: 'StringParameterValue', name: 'OC_PROJECT', value: "$targetProject"],
+                                                                            [$class: 'StringParameterValue', name: 'OC_APP', value: "$ocApp"],
+                                                                            [$class: 'StringParameterValue', name: 'OC_APP_VERSION', value: "$ocAppVersion"],
+                                                                            [$class: 'StringParameterValue', name: 'APPLICATION_PORT', value: "$port"],
+                                                                            [$class: 'StringParameterValue', name: 'TAG', value: "$tag"]
     ]
 }
 
-static Object mapLookup(Map map, String key, Object defaultValue){
-    return map.containsKey(key) ? map.get(key): defaultValue
+private void callJenkinsBuildProjectNewRelic(pomGroupId, pomArtifactId, pomVersion, targetProject, ocApp, ocAppVersion, port, tag, cluster, newRelicKey) {
+    build job: "kd.cloud.openshift.build.springboot.newrelic.$cluster", parameters: [[$class: 'StringParameterValue', name: 'POM_GROUP_ID', value: "$pomGroupId"],
+                                                                                     [$class: 'StringParameterValue', name: 'POM_ARTIFACT_ID', value: "$pomArtifactId"],
+                                                                                     [$class: 'StringParameterValue', name: 'POM_VERSION', value: "$pomVersion"],
+                                                                                     [$class: 'StringParameterValue', name: 'OC_PROJECT', value: "$targetProject"],
+                                                                                     [$class: 'StringParameterValue', name: 'OC_APP', value: "$ocApp"],
+                                                                                     [$class: 'StringParameterValue', name: 'OC_APP_VERSION', value: "$ocAppVersion"],
+                                                                                     [$class: 'StringParameterValue', name: 'APPLICATION_PORT', value: "$port"],
+                                                                                     [$class: 'StringParameterValue', name: 'TAG', value: "$tag"],
+                                                                                     [$class: 'StringParameterValue', name: 'NEWRELIC_KEY', value: "$newRelicKey"]
+    ]
+}
+
+static Object mapLookup(Map map, String key, Object defaultValue) {
+    return map.containsKey(key) ? map.get(key) : defaultValue
 }
 
 class DummyPom2 {
@@ -107,7 +142,9 @@ class DummyPom2 {
 
 // some demos
 
-buildDockerImageSelfRunningJar(targetOsProject:"d", dryRun:true)
-buildDockerImageSelfRunningJar(dryRun:true)
-buildDockerImageSelfRunningJar(dryRun:true, targetOsProject:"d", notExisting:"")
-buildDockerImageSelfRunningJar(targetOsProject:"d", port:"2222", dryRun:true, pomArtifactId:"bla")
+call(targetOsProject: "d", dryRun: true)
+call(dryRun: true)
+call(dryRun: true, targetOsProject: "d", notExisting: "")
+call(targetOsProject: "d", port: "2222", dryRun: true, pomArtifactId: "bla")
+call(targetOsProject: "d", port: "2222", dryRun: true, pomArtifactId: "bla", newRelicKey: "123")
+call(targetOsProject: "d", port: "2222", dryRun: true, pomArtifactId: "bla", cluster: "blabla")
