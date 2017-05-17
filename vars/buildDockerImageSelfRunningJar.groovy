@@ -1,7 +1,7 @@
 import java.util.Map
 
 /**
- * Erstellt ein Docker-Image für ein self-running jar (analog  kd.cloud.openshift.build.springboot.* von https://confluence.sbb.ch/display/ESTA/2.+Buildprozess )
+ * Erstellt ein Docker-Image für ein self-running jar (analog  kd.cloud.openshift.build.springboot[.newrelic].* von https://confluence.sbb.ch/display/ESTA/2.+Buildprozess )
  *  Obligatorische Parameter:
  *      targetOsProject      - Name des Openshift Projektes in welches zu deployen ist
  *
@@ -61,7 +61,7 @@ def call(Map params) {
     }
 
 
-    def targetProject = params.get("targetOsProject")
+    def targetOsProject = params.get("targetOsProject")
     def pomGroupId = mapLookup(params, "pomGroupId", pom.groupId)
     def pomArtifactId = mapLookup(params, "pomArtifactId", pom.artifactId)
     def pomVersion = mapLookup(params, "pomVersion", pom.version)
@@ -84,7 +84,7 @@ def call(Map params) {
     println "pomGroupId: " + pomGroupId
     println "pomArtifactId:" + pomArtifactId
     println "pomVersion:" + pomVersion
-    println "targetProject:" + targetProject
+    println "targetOsProject:" + targetOsProject
     println "ocApp:" + ocApp
     println "ocAppVersion:" + ocAppVersion
     println "port:" + port
@@ -99,19 +99,19 @@ def call(Map params) {
 
     if (!dryRun) {
         if (newRelicKey == null) {
-            callJenkinsBuildProject(pomGroupId, pomArtifactId, pomVersion, targetProject, ocApp, ocAppVersion, port, tag, cluster)
+            callJenkinsBuildProject(pomGroupId, pomArtifactId, pomVersion, targetOsProject, ocApp, ocAppVersion, port, tag, cluster)
         } else {
-            callJenkinsBuildProjectNewRelic(pomGroupId, pomArtifactId, pomVersion, targetProject, ocApp, ocAppVersion, port, tag, cluster, newRelicKey)
+            callJenkinsBuildProjectNewRelic(pomGroupId, pomArtifactId, pomVersion, targetOsProject, ocApp, ocAppVersion, port, tag, cluster, newRelicKey)
         }
     }
 }
 
 
-private void callJenkinsBuildProject(pomGroupId, pomArtifactId, pomVersion, targetProject, ocApp, ocAppVersion, port, tag, cluster) {
+private void callJenkinsBuildProject(pomGroupId, pomArtifactId, pomVersion, targetOsProject, ocApp, ocAppVersion, port, tag, cluster) {
     build job: "kd.cloud.openshift.build.springboot.$cluster", parameters: [[$class: 'StringParameterValue', name: 'POM_GROUP_ID', value: "$pomGroupId"],
                                                                             [$class: 'StringParameterValue', name: 'POM_ARTIFACT_ID', value: "$pomArtifactId"],
                                                                             [$class: 'StringParameterValue', name: 'POM_VERSION', value: "$pomVersion"],
-                                                                            [$class: 'StringParameterValue', name: 'OC_PROJECT', value: "$targetProject"],
+                                                                            [$class: 'StringParameterValue', name: 'OC_PROJECT', value: "$targetOsProject"],
                                                                             [$class: 'StringParameterValue', name: 'OC_APP', value: "$ocApp"],
                                                                             [$class: 'StringParameterValue', name: 'OC_APP_VERSION', value: "$ocAppVersion"],
                                                                             [$class: 'StringParameterValue', name: 'APPLICATION_PORT', value: "$port"],
@@ -119,11 +119,11 @@ private void callJenkinsBuildProject(pomGroupId, pomArtifactId, pomVersion, targ
     ]
 }
 
-private void callJenkinsBuildProjectNewRelic(pomGroupId, pomArtifactId, pomVersion, targetProject, ocApp, ocAppVersion, port, tag, cluster, newRelicKey) {
+private void callJenkinsBuildProjectNewRelic(pomGroupId, pomArtifactId, pomVersion, targetOsProject, ocApp, ocAppVersion, port, tag, cluster, newRelicKey) {
     build job: "kd.cloud.openshift.build.springboot.newrelic.$cluster", parameters: [[$class: 'StringParameterValue', name: 'POM_GROUP_ID', value: "$pomGroupId"],
                                                                                      [$class: 'StringParameterValue', name: 'POM_ARTIFACT_ID', value: "$pomArtifactId"],
                                                                                      [$class: 'StringParameterValue', name: 'POM_VERSION', value: "$pomVersion"],
-                                                                                     [$class: 'StringParameterValue', name: 'OC_PROJECT', value: "$targetProject"],
+                                                                                     [$class: 'StringParameterValue', name: 'OC_PROJECT', value: "$targetOsProject"],
                                                                                      [$class: 'StringParameterValue', name: 'OC_APP', value: "$ocApp"],
                                                                                      [$class: 'StringParameterValue', name: 'OC_APP_VERSION', value: "$ocAppVersion"],
                                                                                      [$class: 'StringParameterValue', name: 'APPLICATION_PORT', value: "$port"],
