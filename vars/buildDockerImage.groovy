@@ -27,7 +27,8 @@ import java.util.Map
 def call(Map params) {
     error = ''
 
-    println "branchname: $BRANCH_NAME"
+
+    //println "branchname: $BRANCH_NAME"
     println "url: "+ getGitUrl()
 
     
