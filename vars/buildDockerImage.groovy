@@ -133,8 +133,8 @@ static Object mapLookup(Map map, String key, Object defaultValue) {
 
 
 static String getBranch() {
-    sh 'git config remote.origin.url'
-    return sh 'git config remote.origin.url'
+    sh 'echo $(git config remote.origin.url)'
+    return ".."
 }
 
 // some demos
