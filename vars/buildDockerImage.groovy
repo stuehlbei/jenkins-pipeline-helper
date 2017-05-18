@@ -6,19 +6,20 @@ import java.util.Map
  *      targetOsProject      - Name des Openshift Projektes in welches zu deployen ist
  *      gitRepoUrl           - Url des git Repos
  *      gitBranch            - Welcher Branch?
- *      dockerDir            - Welches Docker Directory (z.B docker)
+ *
  *      ocApp                - Name des Openshift Images
  *      ocAppVersion         - Version des Openshift Images (ist auch als $VERSION im Buildpod zugänglich)
  *
  *  Optionale Parameter:
- *    tag                     - Zusätzlich zu setzendes Tag (Default: ocAppVersion)
-  *
- *    cluster                 - Auf welchem OSE Cluster soll der Build laufen? (aws, vias, awsdev)  (Default: vias)
+ *    dockerDir              - Welches Docker Directory (Default: docker)
+ *    tag                    - Zusätzlich zu setzendes Tag (Default: ocAppVersion)
  *
- *    baseImageNamespace      - OpenShift Projekt, wo das Basisimage liegt
- *    baseImageNameAndTag     - Name und Tag vom Basisimage
+ *    cluster                - Auf welchem OSE Cluster soll der Build laufen? (aws, vias, awsdev)  (Default: vias)
  *
- *    dryRun                  - Erlaubt es, zu schauen was für Defaults übernommen werden/ zum testen (Default: false)
+ *    baseImageNamespace     - OpenShift Projekt, wo das Basisimage liegt
+ *    baseImageNameAndTag    - Name und Tag vom Basisimage
+ *
+ *    dryRun                 - Erlaubt es, zu schauen was für Defaults übernommen werden/ zum testen (Default: false)
  *
  * Beispiel-Aufruf:
  *     buildDockerImage(targetOsProject: "d", gitRepoUrl: "https://code.sbb.ch/scm/kd_cloud/plattform-cassandra.git", gitBranch: "master", dockerDir: "docker", ocApp: 'greatApp', ocAppVersion: '1', dryRun: true)
@@ -26,7 +27,12 @@ import java.util.Map
 def call(Map params) {
     error = ''
 
-    REQUIRED_PARAMS = ['targetOsProject', 'gitRepoUrl', 'gitBranch', 'dockerDir', 'ocApp', 'ocAppVersion']
+    println "branchname:"+ env.BRANCH_NAME
+    println "git url:"+ sh 'git config remote.origin.url'
+    println "git url:"+ scm.getUserRemoteConfigs()[0].getUrl()
+    
+
+    REQUIRED_PARAMS = ['targetOsProject', 'gitRepoUrl', 'gitBranch', 'ocApp', 'ocAppVersion']
 
     for (String param : REQUIRED_PARAMS) {
         if (!params.containsKey(param)) {
@@ -34,7 +40,7 @@ def call(Map params) {
         }
     }
 
-    Set ALL_PARAMETERS = ['tag', 'dryRun', 'cluster', 'baseImageNamespace', 'baseImageNameAndTag'].plus(REQUIRED_PARAMS)
+    Set ALL_PARAMETERS = ['tag', 'dryRun', 'cluster', 'baseImageNamespace', 'baseImageNameAndTag', 'dockerDir'].plus(REQUIRED_PARAMS)
 
     for (Object key : params.keySet()) {
         if (!ALL_PARAMETERS.contains(key)) {
@@ -47,7 +53,7 @@ def call(Map params) {
     def targetOsProject = params.get("targetOsProject")
     def gitRepoUrl = params.get("gitRepoUrl")
     def gitBranch = params.get("gitBranch")
-    def dockerDir = params.get("dockerDir")
+    def dockerDir = params.get("dockerDir", "docker")
     def ocApp = params.get("ocApp")
     def ocAppVersion = params.get("ocAppVersion")
 
@@ -132,8 +138,8 @@ call(blabla: "", dryRun: true)
 call(targetOsProject: "d", gitRepoUrl: "www.github.com/bla/bla", gitBranch: "master", dockerDir: "docker", ocApp: 'greatApp', ocAppVersion: '1', baseImageNamespace: 'bla', dryRun: true)
 
 
-call(targetOsProject: "d", gitRepoUrl: "www.github.com/bla/bla", gitBranch: "master", dockerDir: "docker", ocApp: 'greatApp', ocAppVersion: '1', dryRun: true)
-call(targetOsProject: "d", gitRepoUrl: "www.github.com/bla/bla", gitBranch: "master", dockerDir: "docker", ocApp: 'greatApp', ocAppVersion: '1',
+call(targetOsProject: "d", gitRepoUrl: "www.github.com/bla/bla", gitBranch: "master", ocApp: 'greatApp', ocAppVersion: '1', dryRun: true)
+call(targetOsProject: "d", gitRepoUrl: "www.github.com/bla/bla", gitBranch: "master", dockerDir: "docker2", ocApp: 'greatApp', ocAppVersion: '1',
         baseImageNamespace: 'bla', baseImageNameAndTag:'...', dryRun: true)
 
 
