@@ -27,10 +27,8 @@ import java.util.Map
 def call(Map params) {
     error = ''
 
-    println "branchname:"+ env.BRANCH_NAME
-
-    println "url:"+ getBranch()
-
+    println "branchname: $BRANCH_NAME"
+    println "url: "+ getGitUrl()
 
     
 
@@ -131,11 +129,11 @@ static Object mapLookup(Map map, String key, Object defaultValue) {
     return map.containsKey(key) ? map.get(key) : defaultValue
 }
 
-
-static String getBranch() {
-    sh 'echo $(git config remote.origin.url)'
-    return ".."
+def String getGitUrl() {
+    return sh(returnStdout: true, script: 'git config remote.origin.url').trim()
 }
+
+
 
 // some demos
 
