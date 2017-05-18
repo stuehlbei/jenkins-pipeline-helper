@@ -28,7 +28,8 @@ def call(Map params) {
     error = ''
 
     println "branchname:"+ env.BRANCH_NAME
-    println "git url:"+ sh 'git config remote.origin.url'
+
+    println "url:"+ getBranch()
     println "git url:"+ scm.getUserRemoteConfigs()[0].getUrl()
     
 
@@ -127,6 +128,12 @@ private void callJenkinsBuildProjectBaseimage(targetOsProject, gitRepoUrl, gitBr
 
 static Object mapLookup(Map map, String key, Object defaultValue) {
     return map.containsKey(key) ? map.get(key) : defaultValue
+}
+
+
+static String getBranch() {
+    sh 'git config remote.origin.url'
+    String result = sh 'git config remote.origin.url'
 }
 
 // some demos
