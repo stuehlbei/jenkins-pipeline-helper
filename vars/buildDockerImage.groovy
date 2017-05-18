@@ -54,9 +54,9 @@ def call(Map params) {
 
 
     def targetOsProject = params.get("targetOsProject")
-    def gitRepoUrl = params.get("gitRepoUrl", getGitUrl(dryRun))
-    def gitBranch = params.get("gitBranch", getGitBranch(dryRun))
-    def dockerDir = params.get("dockerDir", "docker")
+    def gitRepoUrl = mapLookup(params, "gitRepoUrl", getGitUrl(dryRun))
+    def gitBranch = mapLookup(params, "gitBranch", getGitBranch(dryRun))
+    def dockerDir = mapLookup(params, "dockerDir", "docker")
     def ocApp = params.get("ocApp")
     def ocAppVersion = params.get("ocAppVersion")
 
