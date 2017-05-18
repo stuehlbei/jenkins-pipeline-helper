@@ -4,14 +4,15 @@ import java.util.Map
  * Erstellt ein Docker-Image mit eigenem Dockerfile (analog  kd.cloud.openshift.build.gitrepo[.baseimage].* von https://confluence.sbb.ch/display/ESTA/2.+Buildprozess )
  *  Obligatorische Parameter:
  *      targetOsProject      - Name des Openshift Projektes in welches zu deployen ist
- *      gitRepoUrl           - Url des git Repos
- *      gitBranch            - Welcher Branch?
  *
  *      ocApp                - Name des Openshift Images
  *      ocAppVersion         - Version des Openshift Images (ist auch als $VERSION im Buildpod zugänglich)
  *
  *  Optionale Parameter:
- *    dockerDir              - Welches Docker Directory (Default: docker)
+ *    gitRepoUrl             - Wo liegt das Dockerfile? Url des git Repos  (Default: aktuelles Repo (muss ausgecheckt sein))
+ *    gitBranch              -    In welchem Branch?  (Default: aktueller Branch)
+ *    dockerDir              -    In welchem Docker Directory (Default: docker)
+ *
  *    tag                    - Zusätzlich zu setzendes Tag (Default: ocAppVersion)
  *
  *    cluster                - Auf welchem OSE Cluster soll der Build laufen? (aws, vias, awsdev)  (Default: vias)
@@ -27,12 +28,14 @@ import java.util.Map
 def call(Map params) {
     error = ''
 
+    boolean dryRun = mapLookup(params, "dryRun", false)
 
-    println "url: "+ getGitUrl()
+    // temporarily here 
+    println "url: " + getGitUrl(dryRun)
+    println "branch: " + getGitBranch(dryRun)
 
-    
 
-    REQUIRED_PARAMS = ['targetOsProject', 'gitRepoUrl', 'gitBranch', 'ocApp', 'ocAppVersion']
+    REQUIRED_PARAMS = ['targetOsProject', 'ocApp', 'ocAppVersion']
 
     for (String param : REQUIRED_PARAMS) {
         if (!params.containsKey(param)) {
@@ -40,7 +43,7 @@ def call(Map params) {
         }
     }
 
-    Set ALL_PARAMETERS = ['tag', 'dryRun', 'cluster', 'baseImageNamespace', 'baseImageNameAndTag', 'dockerDir'].plus(REQUIRED_PARAMS)
+    Set ALL_PARAMETERS = ['tag', 'dryRun', 'cluster', 'baseImageNamespace', 'baseImageNameAndTag', 'dockerDir', 'gitRepoUrl', 'gitBranch'].plus(REQUIRED_PARAMS)
 
     for (Object key : params.keySet()) {
         if (!ALL_PARAMETERS.contains(key)) {
@@ -48,11 +51,11 @@ def call(Map params) {
         }
     }
 
-    boolean dryRun = mapLookup(params, "dryRun", false)
+
 
     def targetOsProject = params.get("targetOsProject")
-    def gitRepoUrl = params.get("gitRepoUrl")
-    def gitBranch = params.get("gitBranch")
+    def gitRepoUrl = params.get("gitRepoUrl", getGitUrl(dryRun))
+    def gitBranch = params.get("gitBranch", getGitBranch(dryRun))
     def dockerDir = params.get("dockerDir", "docker")
     def ocApp = params.get("ocApp")
     def ocAppVersion = params.get("ocAppVersion")
@@ -125,12 +128,16 @@ private void callJenkinsBuildProjectBaseimage(targetOsProject, gitRepoUrl, gitBr
     ]
 }
 
-static Object mapLookup(Map map, String key, Object defaultValue) {
+Object mapLookup(Map map, String key, Object defaultValue) {
     return map.containsKey(key) ? map.get(key) : defaultValue
 }
 
-def String getGitUrl() {
-    return sh(returnStdout: true, script: 'git config remote.origin.url').trim()
+String getGitUrl(boolean dryRun) {
+    return dryRun ? "demoUrl" : sh(returnStdout: true, script: 'git config remote.origin.url').trim()
+}
+
+String getGitBranch(boolean dryRun) {
+    return dryRun ? "demoBranch" : sh(returnStdout: true, script: 'git rev-parse --abbrev-ref HEAD').trim()
 }
 
 
@@ -148,5 +155,5 @@ call(targetOsProject: "d", gitRepoUrl: "www.github.com/bla/bla", gitBranch: "mas
 call(targetOsProject: "d", gitRepoUrl: "www.github.com/bla/bla", gitBranch: "master", dockerDir: "docker2", ocApp: 'greatApp', ocAppVersion: '1',
         baseImageNamespace: 'bla', baseImageNameAndTag:'...', dryRun: true)
 
-
+call(targetOsProject: "d", ocApp: 'greatApp', ocAppVersion: '1', dryRun: true)
 
