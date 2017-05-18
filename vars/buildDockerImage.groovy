@@ -30,7 +30,8 @@ def call(Map params) {
     println "branchname:"+ env.BRANCH_NAME
 
     println "url:"+ getBranch()
-    println "git url:"+ scm.getUserRemoteConfigs()[0].getUrl()
+
+
     
 
     REQUIRED_PARAMS = ['targetOsProject', 'gitRepoUrl', 'gitBranch', 'ocApp', 'ocAppVersion']
@@ -133,7 +134,7 @@ static Object mapLookup(Map map, String key, Object defaultValue) {
 
 static String getBranch() {
     sh 'git config remote.origin.url'
-    String result = sh 'git config remote.origin.url'
+    return sh 'git config remote.origin.url'
 }
 
 // some demos
