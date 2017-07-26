@@ -135,7 +135,7 @@ String getGitUrl(boolean dryRun) {
 }
 
 String getGitBranch(boolean dryRun) {
-    return dryRun ? "demoBranch" : sh(returnStdout: true, script: 'git for-each-ref --format=\'%(objectname) %(refname:short)\' refs/heads | awk "/^$(git rev-parse HEAD)/ {print \\$2}"').trim()
+    return dryRun ? "demoBranch" : sh(returnStdout: true, script: 'env.BRANCH_NAME').trim()
 }
 
 
