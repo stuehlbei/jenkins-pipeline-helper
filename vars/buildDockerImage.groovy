@@ -135,7 +135,7 @@ String getGitUrl(boolean dryRun) {
 }
 
 String getGitBranch(boolean dryRun) {
-    return dryRun ? "demoBranch" : sh(returnStdout: true, script: 'sh "echo $BRANCH_NAME"').trim()
+    return dryRun ? "demoBranch" : sh(returnStdout: true, script: 'echo $BRANCH_NAME').trim()
 }
 
 
