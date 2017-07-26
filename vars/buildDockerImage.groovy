@@ -28,13 +28,6 @@ import java.util.Map
 def call(Map params) {
     error = ''
 
-    boolean dryRun = mapLookup(params, "dryRun", false)
-
-    // temporarily here 
-    println "url: " + getGitUrl(dryRun)
-    println "branch: " + getGitBranch(dryRun)
-
-
     REQUIRED_PARAMS = ['targetOsProject', 'ocApp', 'ocAppVersion']
 
     for (String param : REQUIRED_PARAMS) {
@@ -51,11 +44,16 @@ def call(Map params) {
         }
     }
 
-
-
+    boolean dryRun = mapLookup(params, "dryRun", false)
+    
     def targetOsProject = params.get("targetOsProject")
-    def gitRepoUrl = mapLookup(params, "gitRepoUrl", getGitUrl(dryRun))
-    def gitBranch = mapLookup(params, "gitBranch", getGitBranch(dryRun))
+
+    // inlining for lazy evaluation
+    def gitRepoUrl = params.containsKey("gitRepoUrl") ? params.get("gitRepoUrl") : getGitUrl(dryRun)
+
+    // inlining for lazy evaluation
+    def gitBranch = params.containsKey("gitBranch") ? params.get("gitBranch") : getGitBranch(dryRun)
+
     def dockerDir = mapLookup(params, "dockerDir", "docker")
     def ocApp = params.get("ocApp")
     def ocAppVersion = params.get("ocAppVersion")
@@ -137,7 +135,7 @@ String getGitUrl(boolean dryRun) {
 }
 
 String getGitBranch(boolean dryRun) {
-    return dryRun ? "demoBranch" : sh(returnStdout: true, script: 'git rev-parse --abbrev-ref HEAD').trim()
+    return dryRun ? "demoBranch" : sh(returnStdout: true, script: 'git for-each-ref --format=\'%(objectname) %(refname:short)\' refs/heads | awk "/^$(git rev-parse HEAD)/ {print \\$2}"').trim()
 }
 
 
@@ -157,3 +155,8 @@ call(targetOsProject: "d", gitRepoUrl: "www.github.com/bla/bla", gitBranch: "mas
 
 call(targetOsProject: "d", ocApp: 'greatApp', ocAppVersion: '1', dryRun: true)
 
+
+// try out escaping
+x = 'git for-each-ref --format=\'%(objectname) %(refname:short)\' refs/heads | awk "/^$(git rev-parse HEAD)/ {print \\$2}"'
+
+print "string is: $x"
