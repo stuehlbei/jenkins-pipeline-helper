@@ -177,7 +177,7 @@ class DummyPom3 {
     public String groupId, artifactId, version
 }
 
-def failTheBuild(String message) {
+void failTheBuild(String message) {
     def messageColor = "\u001B[32m"
     def messageColorReset = "\u001B[0m"
 
