@@ -117,10 +117,13 @@ def call(Map params) {
 
     if (!error.equals("")) {
         println("\nERROR:" + error + "\n")
-        return
     }
 
     if (!dryRun) {
+        if (!error.equals("")) {
+            throw new RuntimeException(" error in build ")
+        }
+
         if (baseImageNamespace == "") {
             callJenkinsBuildProject(targetOsProject, gitRepoUrl, gitBranch, dockerDir, ocApp, ocAppVersion, tag, cluster)
         } else {

@@ -94,10 +94,13 @@ def call(Map params) {
 
     if (!error.equals("")) {
         println("\nERROR:" + error + "\n")
-        return
     }
 
     if (!dryRun) {
+        if (!error.equals("")) {
+            throw new RuntimeException(" error in build ")
+        }
+
         if (newRelicKey == null) {
             callJenkinsBuildProject(pomGroupId, pomArtifactId, pomVersion, targetOsProject, ocApp, ocAppVersion, port, tag, cluster)
         } else {
