@@ -71,7 +71,6 @@ def call(Map params) {
                 error += "ocApp or ocAppVersion unset and problem reading them from pom file " + e
             }
         } else {
-            println "param map:" + params + "\n"
             pom = new DummyPom3(groupId: "<groupId>",
                     artifactId: "<artifactId>",
                     version: "<version>"
@@ -174,13 +173,13 @@ class DummyPom3 {
 
 // some demos
 
-println "will fail"
+println "will fail:"
 
 call(dryRun: true)
 call(blabla: "", dryRun: true)
 call(targetOsProject: "d", gitRepoUrl: "www.github.com/bla/bla", gitBranch: "master", dockerDir: "docker", ocApp: 'greatApp', ocAppVersion: '1', baseImageNamespace: 'bla', dryRun: true)
 
-println "\n\n\nshould work"
+println "\n\n\nshould work:"
 
 call(targetOsProject: "e", ocApp: 'greatApp', dryRun: true)
 call(targetOsProject: "f", gitRepoUrl: "www.github.com/bla/bla", gitBranch: "master", ocAppVersion: '1', dryRun: true)
