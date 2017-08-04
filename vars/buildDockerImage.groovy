@@ -5,10 +5,11 @@ import java.util.Map
  *  Obligatorische Parameter:
  *      targetOsProject      - Name des Openshift Projektes in welches zu deployen ist
  *
- *      ocApp                - Name des Openshift Images
- *      ocAppVersion         - Version des Openshift Images (ist auch als $VERSION im Buildpod zugänglich)
- *
  *  Optionale Parameter:
+ *    ocApp                  - Name des Openshift Images (Default: artifactId aus ./pom.xml )
+ *    ocAppVersion           - Version des Openshift Images (ist auch als $VERSION im Buildpod zugänglich)
+ *                               (Default: version aus ./pom.xml )
+ *
  *    gitRepoUrl             - Wo liegt das Dockerfile? Url des git Repos  (Default: aktuelles Repo (muss ausgecheckt sein))
  *    gitBranch              -    In welchem Branch?  (Default: aktueller Branch)
  *    dockerDir              -    In welchem Docker Directory (Default: docker)
@@ -17,8 +18,8 @@ import java.util.Map
  *
  *    cluster                - Auf welchem OSE Cluster soll der Build laufen? (aws, vias, awsdev)  (Default: vias)
  *
- *    baseImageNamespace     - OpenShift Projekt, wo das Basisimage liegt
- *    baseImageNameAndTag    - Name und Tag vom Basisimage
+ *    baseImageNamespace     - OpenShift Projekt, wo das Basisimage liegt  (Default: kein base image)
+ *    baseImageNameAndTag    - Name und Tag vom Basisimage                 (Default: kein base image)
  *
  *    dryRun                 - Erlaubt es, zu schauen was für Defaults übernommen werden/ zum testen (Default: false)
  *
@@ -28,7 +29,7 @@ import java.util.Map
 def call(Map params) {
     error = ''
 
-    REQUIRED_PARAMS = ['targetOsProject', 'ocApp', 'ocAppVersion']
+    REQUIRED_PARAMS = ['targetOsProject']
 
     for (String param : REQUIRED_PARAMS) {
         if (!params.containsKey(param)) {
@@ -36,7 +37,7 @@ def call(Map params) {
         }
     }
 
-    Set ALL_PARAMETERS = ['tag', 'dryRun', 'cluster', 'baseImageNamespace', 'baseImageNameAndTag', 'dockerDir', 'gitRepoUrl', 'gitBranch'].plus(REQUIRED_PARAMS)
+    Set ALL_PARAMETERS = ['tag', 'dryRun', 'cluster', 'baseImageNamespace', 'baseImageNameAndTag', 'dockerDir', 'gitRepoUrl', 'gitBranch', 'ocApp', 'ocAppVersion'].plus(REQUIRED_PARAMS)
 
     for (Object key : params.keySet()) {
         if (!ALL_PARAMETERS.contains(key)) {
@@ -55,8 +56,36 @@ def call(Map params) {
     def gitBranch = params.containsKey("gitBranch") ? params.get("gitBranch") : getGitBranch(dryRun)
 
     def dockerDir = mapLookup(params, "dockerDir", "docker")
+
     def ocApp = params.get("ocApp")
     def ocAppVersion = params.get("ocAppVersion")
+    
+    if ((ocApp == null) || (ocAppVersion == null) ) {
+        // try to get the param from pom.xml
+
+        def pom = null
+        if (!dryRun) {
+            try {
+                pom = readMavenPom file: 'pom.xml'
+            } catch (Exception e){
+                error += "ocApp or ocAppVersion unset and problem reading them from pom file " + e
+            }
+        } else {
+            println "param map:" + params + "\n"
+            pom = new DummyPom3(groupId: "<groupId>",
+                    artifactId: "<artifactId>",
+                    version: "<version>"
+            )
+        }
+
+        if (ocApp == null) {
+            ocApp = pom.artifactId
+        }
+        if (ocAppVersion == null){
+            ocAppVersion = pom.version
+        }
+    }
+
 
     def baseImageNamespace = mapLookup(params, "baseImageNamespace", "")
     def baseImageNameAndTag = mapLookup(params, "baseImageNameAndTag", "")
@@ -138,22 +167,27 @@ String getGitBranch(boolean dryRun) {
     return dryRun ? "demoBranch" : sh(returnStdout: true, script: 'echo $BRANCH_NAME').trim()
 }
 
+class DummyPom3 {
+    public String groupId, artifactId, version
+}
 
 
 // some demos
 
-// will fail
-call(targetOsProject: "d", dryRun: true)
+println "will fail"
+
 call(dryRun: true)
 call(blabla: "", dryRun: true)
 call(targetOsProject: "d", gitRepoUrl: "www.github.com/bla/bla", gitBranch: "master", dockerDir: "docker", ocApp: 'greatApp', ocAppVersion: '1', baseImageNamespace: 'bla', dryRun: true)
 
+println "\n\n\nshould work"
 
-call(targetOsProject: "d", gitRepoUrl: "www.github.com/bla/bla", gitBranch: "master", ocApp: 'greatApp', ocAppVersion: '1', dryRun: true)
-call(targetOsProject: "d", gitRepoUrl: "www.github.com/bla/bla", gitBranch: "master", dockerDir: "docker2", ocApp: 'greatApp', ocAppVersion: '1',
+call(targetOsProject: "e", ocApp: 'greatApp', dryRun: true)
+call(targetOsProject: "f", gitRepoUrl: "www.github.com/bla/bla", gitBranch: "master", ocAppVersion: '1', dryRun: true)
+call(targetOsProject: "g", gitRepoUrl: "www.github.com/bla/bla", gitBranch: "master", dockerDir: "docker2", ocApp: 'greatApp', ocAppVersion: '1',
         baseImageNamespace: 'bla', baseImageNameAndTag:'...', dryRun: true)
 
-call(targetOsProject: "d", ocApp: 'greatApp', ocAppVersion: '1', dryRun: true)
+call(targetOsProject: "h", ocApp: 'greatApp', ocAppVersion: '1', dryRun: true)
 
 
 // try out escaping
