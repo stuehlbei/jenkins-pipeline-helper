@@ -69,6 +69,10 @@ def call(Map params) {
                 pom = readMavenPom file: 'pom.xml'
             } catch (Exception e){
                 error += "ocApp or ocAppVersion unset and problem reading them from pom file " + e
+                pom = new DummyPom3(groupId: "<groupId>",
+                        artifactId: "<artifactId>",
+                        version: "<version>"
+                )
             }
         } else {
             pom = new DummyPom3(groupId: "<groupId>",
@@ -121,7 +125,7 @@ def call(Map params) {
 
     if (!dryRun) {
         if (!error.equals("")) {
-            throw new RuntimeException(" error in build ")
+            failTheBuild(error)
         }
 
         if (baseImageNamespace == "") {
@@ -171,6 +175,15 @@ String getGitBranch(boolean dryRun) {
 
 class DummyPom3 {
     public String groupId, artifactId, version
+}
+
+def failTheBuild(String message) {
+    def messageColor = "\u001B[32m"
+    def messageColorReset = "\u001B[0m"
+
+    currentBuild.result = "FAILURE"
+    echo messageColor + message + messageColorReset
+    error(message)
 }
 
 
